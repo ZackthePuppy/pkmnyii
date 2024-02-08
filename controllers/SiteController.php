@@ -9,6 +9,7 @@ use yii\web\Response;
 use yii\filters\VerbFilter;
 use app\models\LoginForm;
 use app\models\ContactForm;
+use app\models\SearchForm;
 use yii\httpclient\Client;
 
 class SiteController extends Controller
@@ -127,18 +128,48 @@ class SiteController extends Controller
         return $this->render('about');
     }
 
-    public function actionSpeak() {
-        return $this->render("speak", ['message' => "HELLO WORLD", 'name' => 'mayk']);
+
+    /**
+     * Displays new page.
+     *
+     */
+    public function actionSearch()
+    {
+        $model = new SearchForm();
+
+        if ($model->load(Yii::$app->request->post())){
+            if (!$model->searchpkmn()) {
+                
+            Yii::$app->session->setFlash('pkmnNameNotFound');
+            return $this->render('search', [
+                'model' => $model
+            ]);
+            }
+            else {
+                $value = $model->searchpkmn();
+                Yii::$app->session->setFlash('pkmnNameSubmitted');
+                return $this->render('search', [
+                    'data' => $value,
+                    'model' => $model
+                ]);
+            }
+        }
+
+        return $this->render('search',[
+            'model' => $model,
+        ]);
     }
 
-    public function actionNew(){
+
+
+    public function actionNewORIGINAL(){
         // Create a new HTTP client instance
         $client = new Client();
-
+        $pkmn = 'ditto';
         // Send a GET request to the external API
         $response = $client->createRequest()
             ->setMethod('GET')
-            ->setUrl('https://pokeapi.co/api/v2/pokemon/pikachu') // Replace this URL with the URL of the external API
+            ->setUrl('https://pokeapi.co/api/v2/pokemon/' . $pkmn) // Replace this URL with the URL of the external API
             ->send();
 
         // Check if the request was successful (status code 200)
@@ -147,7 +178,7 @@ class SiteController extends Controller
             $data = $response->data;
             // Render a view and pass the API data to it
             return $this->render('new', [
-                'data' => $data,
+                'data' => $data
             ]);
         } else {
             // Handle the case where the API request failed
